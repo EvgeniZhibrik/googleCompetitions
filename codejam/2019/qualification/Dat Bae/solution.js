@@ -68,9 +68,18 @@ function initModel(line) {
 
 function makeMove() {
 	if (Model.F === 0) {
+		var first = true;
 		console.log(Model.parts.map(function(val, ind) {
-
-		}))
+			if (val.broken && first) {
+				first = false;
+				return `${ind}`;
+			}
+			if (val.broken && !first) {
+				return ` ${ind}`;
+			}
+			return '';
+		}).join(''));
+		return;
 	}
 	var move = '';
 	if (Model.F === 5) {
