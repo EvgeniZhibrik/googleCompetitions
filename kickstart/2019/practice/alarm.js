@@ -26,61 +26,22 @@ rl.on('line', function (line) {
 });
 
 function saveMul(a, b) {
-    if (a < b) {
-        a = a + b;
-        b = a - b;
-        a = a - b;
-    }
-    if (b === 1) {
-        return a;
-    }
-    var ans = 0;
-    var c = Math.min(Math.floor(1000000007 / a), b);
-    var forDst = Math.floor(b / c);
-    for (var i = 0; i < forDst; i++) {
-        ans += a * c;
-        ans %= 1000000007;
-    }
-    ans += a * (b % c);
-    ans %= 1000000007;
-    return ans;
+	while (a < 0) {
+		a += 1000000007;
+	}
+
+	while (b < 0) {
+		b += 1000000007;
+	}
+    return (a * b) % 1000000007;
 }
 
 function savePow(a, b) {
-    var ans = 1;
-    var pow = Math.min(b, Math.floor(Math.log(1000000007) / Math.log(a)));
-
-    var forDst = Math.floor(b / pow);
-    var arg = Math.pow(a, pow);
-    for (var i = 0; i < forDst; i++) {
-        ans = saveMul(ans, arg);
-    }
-    ans = saveMul(ans, Math.pow(a, b % pow));
-    return ans;
-}
-
-var geomBuffer = [];
-for (var i = 0; i < 1000000; i++) {
-    geomBuffer[i] = [];
-}
-
-function geomProg(a, k) {
-    if (a === 1) {
-        return k;
-    }
-    if (geomBuffer[a - 1][k - 1] || geomBuffer[a - 1][k - 1] === 0) {
-        return geomBuffer[a - 1][k - 1];
-    }
-    var d = 1;
-    while (geomBuffer[a - 1][d - 1] || geomBuffer[a - 1][d - 1] === 0) {
-        d++;
-    }
-    var sum = d > 1 ? geomBuffer[a - 1][d - 2] : 0;
-    for (var c = d; c <= k; c++) {
-        sum = (sum + savePow(a, c)) % 1000000007;
-        geomBuffer[a - 1][c - 1] = sum;
-    }
-    return geomBuffer[a - 1][k - 1];
+	var res = a;
+	for (; b > 1; b--) {
+		res = saveMul(res, a);
+	}
+	return res;
 }
 
 function runSolution() {
@@ -107,12 +68,16 @@ function runSolution() {
 
     var answer = 0;
     for (var i = 0; i < N; i++) {
-        var z = saveMul((N - i), A[i]);
-        var sum = 0;
-        for (var j = 0; j <= i; j++) {
-            sum = (sum + geomProg(j + 1, K)) % 1000000007;
-        }
-        answer = (answer + saveMul(z, sum)) % 1000000007;
+    	var maxPos = i + 1;
+
+    	var sum = saveMul(N - i, K);
+    	for (var pos = 2; pos <= maxPos; pos++) {
+    		var agg = saveMul(pos, savePow(pos, K) - 1);
+    		agg = Math.round(agg / (pos - 1));
+    		agg = saveMul(agg, N - pos + 1);
+    		sum = (sum + agg) % 1000000007;
+	    }
+    	answer = (answer + saveMul(A[i], sum)) % 1000000007;
     }
 
     console.log('Case #' + (test + 1) + ': ' + answer);
