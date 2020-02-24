@@ -73,7 +73,7 @@ function runSolution() {
     	var sum = saveMul(N - i, K);
     	for (var pos = 2; pos <= maxPos; pos++) {
     		var agg = saveMul(pos, savePow(pos, K) - 1);
-    		agg = Math.round(agg / (pos - 1));
+    		agg /= (pos - 1);
     		agg = saveMul(agg, N - pos + 1);
     		sum = (sum + agg) % 1000000007;
 	    }
