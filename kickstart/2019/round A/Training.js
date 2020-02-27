@@ -26,7 +26,7 @@ rl.on('line', function (line) {
 });
 
 function runSolution() {
-    let line = +lines.shift().split(' ');
+    let line = lines.shift().split(' ');
     const N = +line[0];
     const P = +line[1];
 
@@ -36,12 +36,21 @@ function runSolution() {
 
     arr.sort((a, b) => a - b);
 
-    const arr2 = [];
     let sum = 0;
+    let min = Infinity;
     for (let i = 0; i < N; i++) {
-
+    	sum += arr[i];
+    	if (i >= P) {
+    		sum -= arr[i - P];
+	    }
+    	if (i >= P - 1) {
+    		const val = (arr[i] * P) - sum;
+    		if (val < min) {
+    			min = val;
+		    }
+	    }
     }
 
-    console.log('Case #' + (test + 1) + ': ' + answer);
+    console.log('Case #' + (test + 1) + ': ' + min);
     test++;
 }
