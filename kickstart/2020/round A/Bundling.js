@@ -38,46 +38,74 @@ rl.on('line', function (line) {
 
 function runSolution() {
 
-    const bigObj = lines.reduce((obj, line) => {
-        if (line.length > obj.max) {
-            obj.max = line.length;
-        }
+    const graph = lines.reduce((obj, line) => {
+        let node = obj.root;
 
-        for (let i = 1; i <= line.length; i++) {
-            if (!obj[i]) {
-                obj[i] = {};
-            }
-            let substr = line.slice(0, i);
-            if (!obj[i][substr]) {
-                obj[i][substr] = 1;
+        for (let i = 0; i < line.length; i++) {
+            let letter = line[i];
+            if (!node.children[letter]) {
+                node.children[letter] = new Node(letter, node);
             } else {
-                obj[i][substr]++;
+                node.children[letter].count++;
             }
+            node = node.children[letter];
         }
 
         return obj;
-    }, { max: 0 });
+    }, { root: new Node('', null, 0) });
 
-    let ans = 0;
-    for (let i = bigObj.max; i > 0; i--) {
+    let sum = 0;
+    let stack = [graph.root];
+    let level = 0;
 
-        let max = 0, maxField = '';
-        for (let substr in bigObj[i]) {
-            if (bigObj[i][substr] > max) {
-                max = bigObj[i][substr];
-                maxField = substr;
+    while (Object.keys(graph.root.children).length) {
+        stack = [graph.root];
+        while (stack.length) {
+            let vert = stack.pop();
+
+            if (vert.parent && vert.count < K) {
+                delete vert.parent.children[vert.letter];
+                continue;
             }
-        }
 
-        if (max >= K) {
-            ans += i;
-            for (let j = 1; j <= maxField.length; j++) {
-                bigObj[j][maxField.slice(0, j)] -= K;
+            let children = Object.values(vert.children);
+            children.sort((a, b) => a.count - b.count);
+
+            let flag = false;
+            for (let i = 0; i < children.length; i++) {
+                let child = children[i];
+                if (child.count < K) {
+                    delete vert.children[child.letter];
+                    continue;
+                }
+                stack.push(child);
+                flag = true;
             }
-            i++;
+
+            if (!flag) {
+                if (vert.parent) {
+                    stack.push(vert);
+                }
+                level = 0;
+                while (vert.parent) {
+                    vert.count -= K;
+                    vert = vert.parent;
+                    level++;
+                }
+                sum += level;
+            }
         }
     }
 
-    console.log('Case #' + (test + 1) + ': ' + ans);
+    console.log('Case #' + (test + 1) + ': ' + sum);
     test++;
+}
+
+class Node {
+    constructor(letter, parent, count = 1) {
+        this.letter = letter;
+        this.parent = parent;
+        this.children = {};
+        this.count = count;
+    }
 }
