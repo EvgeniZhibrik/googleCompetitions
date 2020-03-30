@@ -25,6 +25,7 @@ rl.on('line', function (line) {
         runSolution();
         T--;
         N = 0;
+        lines = [];
     }
 
     if (T === 0) {
@@ -53,7 +54,6 @@ function runSolution() {
 
     let sum = 0;
     let stack = [graph.root];
-    let level = 0;
 
     while (Object.keys(graph.root.children).length) {
         stack = [graph.root];
@@ -81,18 +81,18 @@ function runSolution() {
 
             if (!flag) {
                 if (vert.parent) {
-                    stack.push(vert);
+                    delete vert.parent.children[vert.letter];
+                    sum += 2;
                 }
                 while (vert.parent) {
                     vert.count -= 2;
                     vert = vert.parent;
                 }
-                sum += 2;
             }
         }
     }
 
-    console.log('Case #' + (test + 1) + ': ' + 'IMPOSSIBLE');
+    console.log('Case #' + (test + 1) + ': ' + sum);
     test++;
 
 }
