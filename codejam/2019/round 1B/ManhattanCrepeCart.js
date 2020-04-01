@@ -36,47 +36,51 @@ rl.on('line', function (line) {
 });
 
 function runSolution() {
-    const squares = lines.reduce((prev, cur) => {
+    const vertical = (new Array(Q + 1)).fill(0);
+    const horizontal = (new Array(Q + 1)).fill(0);
+    lines.forEach((cur) => {
         let [x, y, z] = cur.split(' ');
         x = +x;
         y = +y;
 
         switch (z) {
             case 'N':
-                prev.push([0, Q, y + 1, Q]);
+                for (let i = y + 1; i <= Q; i++) {
+                    vertical[i]++;
+                }
                 break;
             case 'W':
-                prev.push([0, x - 1, 0, Q]);
+                for (let i = 0; i < x; i++) {
+                    horizontal[i]++;
+                }
                 break;
             case 'E':
-                prev.push([x + 1, Q, 0, Q]);
+                for (let i = x + 1; i <= Q; i++) {
+                    horizontal[i]++;
+                }
                 break;
             case 'S':
-                prev.push([0, Q, 0, y - 1]);
+                for (let i = 0; i < y; i++) {
+                    vertical[i]++;
+                }
                 break;
             default:
                 break;
         }
+    });
 
-        return prev;
-    }, []);
-
-    let max = -1;
-    let maxCoord;
+    let maxV = -1;
+    let maxH = -1;
+    let maxCoord = [];
 
     for (let i = 0; i <= Q; i++) {
-        for (let j = 0; j <= Q; j++) {
-            let count = squares.reduce((prev, cur) => {
-                if (cur[0] <= i && i <= cur[1] && cur[2] <= j && j <= cur[3]) {
-                    prev++;
-                }
-                return prev;
-            }, 0);
-
-            if (count > max) {
-                max = count;
-                maxCoord = [i, j];
-            }
+        if (vertical[i] > maxV) {
+            maxV = vertical[i];
+            maxCoord[1] = i;
+        }
+        if (horizontal[i] > maxH) {
+            maxH = horizontal[i];
+            maxCoord[0] = i;
         }
     }
 
