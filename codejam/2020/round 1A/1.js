@@ -36,37 +36,64 @@ rl.on('line', function (line) {
 });
 
 function runSolution() {
-    let k = 0, r = 0, c = 0;
-    const arr = lines.map((line, i) => {
-        const obj = {};
-        let flag = false;
+    const arr = lines.map((line) => line.split('*'));
 
-        return line.split(' ').map((v, j) => {
-            v = +v;
-            if (i === j) {
-                k += v;
+    let maxW = '', maxL = 0;
+    for (let i = 0; i < N; i++) {
+        let word = arr[i][0];
+        if (word.length > maxL) {
+            if (word.slice(0, maxL) === maxW) {
+                maxW = word;
+                maxL = word.length;
+                continue;
             }
-            if (obj[v] && !flag) {
-                r++;
-                flag = true;
-            }
-            obj[v] = true;
-            return v;
-        });
-    });
+            console.log('Case #' + (test + 1) + ': ' + '*');
+            test++;
+            return;
+        }
+        if (word === maxW.slice(0, word.length)) {
+            continue;
+        }
+        console.log('Case #' + (test + 1) + ': ' + '*');
+        test++;
+        return;
+    }
 
-    for (let j = 0; j < N; j++) {
-        const obj = {};
-        for (let i = 0; i < N; i++) {
-            if (obj[arr[i][j]]) {
-                c++;
-                break;
+    let start = maxW;
+
+    maxW = '';
+    maxL = 0;
+    for (let i = 0; i < N; i++) {
+        let word = arr[i][arr[i].length - 1];
+        if (word.length > maxL) {
+            if (word.slice(-maxL) === maxW || maxL === 0) {
+                maxW = word;
+                maxL = word.length;
+                continue;
             }
-            obj[arr[i][j]] = true;
+            console.log('Case #' + (test + 1) + ': ' + '*');
+            test++;
+            return;
+        }
+        if (word === maxW.slice(-word.length) || word.length === 0) {
+            continue;
+        }
+        console.log('Case #' + (test + 1) + ': ' + '*');
+        test++;
+        return;
+    }
+
+    let finish = maxW;
+
+    for (let i = 0; i < N; i++) {
+        for (let j = 1; j < arr[i].length - 1; j++) {
+            start += arr[i][j];
         }
     }
 
-    console.log('Case #' + (test + 1) + ': ' + k + ' ' + r + ' ' + c);
+    start += finish;
+
+    console.log('Case #' + (test + 1) + ': ' + start);
     test++;
 
 }
