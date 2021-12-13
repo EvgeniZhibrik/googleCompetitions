@@ -37,12 +37,55 @@ rl.on('line', function (line) {
 
 
 function runSolution() {
+    if (trace === N + 1 || trace === N * N - 1) {
+        console.log(`Case #${count}: IMPOSSIBLE`);
+        count++;
+        return;
+    }
+
     let matrix = [];
     for (let i = 0; i < N; i++) {
         matrix[i] = [];
     }
 
-    let flag = findSolution(0, matrix);
+    let ok = false;
+    let a, b, c;
+    for (let A = 1; A <= N && !ok; A++) {
+        for (let B = 1; B <= N && !ok; B++) {
+            if (A === B) {
+                let C = A;
+                if ((N - 2) * A + B + C === trace) {
+                    a = A;
+                    b = B;
+                    c = C;
+                    ok = true;
+                }
+            } else {
+                for (let C = 1; C <= N && !ok; C++) {
+                    if (C === A) {
+                        continue;
+                    }
+                    if ((N - 2) * A + B + C === trace) {
+                        a = A;
+                        b = B;
+                        c = C;
+                        ok = true;
+                    }
+                }
+            }
+        }
+    }
+
+    for (let i = 2; i < N; i++) {
+        matrix[i][i] = a;
+    }
+    matrix[0][0] = b;
+    matrix[1][1] = c;
+    if (a !== b) {
+        matrix[1][0] = a;
+        matrix[0][1] = a;
+    }
+    let flag = findSolution(matrix);
 
     if (!flag) {
         console.log(`Case #${count}: IMPOSSIBLE`);
@@ -50,66 +93,162 @@ function runSolution() {
     }
 }
 
-function findSolution(level, matrix) {
-    if (level === N * N) {
-        console.log(`Case #${count}: POSSIBLE`);
-        for (let i = 0; i < N; i++) {
-            console.log(matrix[i].join(' '));
-        }
-        count++;
-        return true;
-    }
-
-    let j = level % N;
-    let i = (level - j) / N;
-    let mainFlag = false;
-    let curTr = 0;
-    if (i === j) {
-        for (let i1 = 0; i1 < i; i1++) {
-            curTr += matrix[i1][i1];
-        }
-    }
-
-    for (let n = 1; n <= N; n++) {
-        let flag = true;
-        for (let i1 = 0; i1 < i; i1++) {
-            if (matrix[i1][j] === n) {
-                flag = false;
-                break;
+function findSolution(matrix) {
+    for (let i = 0; i < N; i++) {
+        const graph = new BipartiteGraph();
+        for(let j = 0; j < N; j++) {
+            if (!matrix[i][j]) {
+                graph.addU(`cell_${j}`);
+            }
+            if (!matrix[i].includes(j+1)) {
+                graph.addV(`number_${j + 1}`);
             }
         }
-        if (!flag) {
-            continue;
-        }
-        for (let j1 = 0; j1 < j; j1++) {
-            if (matrix[i][j1] === n) {
-                flag = false;
-                break;
-            }
-        }
-        if (!flag) {
-            continue;
-        }
 
-        if (i === j) {
-            let minTr = curTr;
-            let maxTr = curTr;
-
-            minTr += n;
-            maxTr += n;
-            minTr += N - i - 1;
-            maxTr += (N - i - 1) * N;
-            if (maxTr < trace || minTr > trace) {
+        for(let j = 0; j < N; j++) {
+            if (matrix[i][j]) {
                 continue;
             }
+            const used = {};
+            for (let i1 = 0; i1 < N; i1++) {
+                if (matrix[i1][j]) {
+                    used[matrix[i1][j]] = true;
+                }
+                if (matrix[i][i1]) {
+                    used[matrix[i][i1]] = true;
+                }
+            }
+
+            for (let k = 1; k <= N; k++) {
+                if (!used[k]) {
+                    graph.addEdge(`cell_${j}`, `number_${k}`);
+                }
+            }
         }
 
-        matrix[i][j] = n;
-        mainFlag = mainFlag || findSolution(level + 1, matrix);
-        if (mainFlag) {
-            return true;
+        const [pU, pV, res] = HK(graph);
+        if (res < N - matrix[i].filter((v) => !!v).length) {
+            return false;
+        } else {
+            Object.keys(pU).forEach((u) => {
+                const cell = +u.split('_')[1];
+                const num = +pU[u].name.split('_')[1];
+                matrix[i][cell] = num;
+            });
         }
+
     }
 
-    return false;
+    console.log(`Case #${count}: POSSIBLE`);
+    for (let i = 0; i < N; i++) {
+        console.log(matrix[i].join(' '));
+    }
+    count++;
+    return true;
+}
+
+class BipartiteGraph {
+    constructor() {
+        this.u = [];
+        this.v = [];
+    }
+
+    addU(name) {
+        this.u.push({
+            name,
+            edges: []
+        });
+    }
+
+    addV(name) {
+        this.v.push({
+            name,
+            edges: []
+        });
+    }
+
+    addEdge(u, v) {
+        const U = this.u.find((vert) => vert.name === u);
+        const V = this.v.find((vert) => vert.name === v);
+        if (U && V) {
+            U.edges.push(V);
+            V.edges.push(U);
+        }
+    }
+}
+
+function HK(graph) {
+    const dist = {
+        nil: Infinity
+    };
+
+    const Nil = {
+        name: 'nil',
+        edges: []
+    };
+    const pairU = graph.u.reduce((obj, vert) => {
+        obj[vert.name] = Nil;
+        dist[vert.name] = null;
+        return obj;
+    }, {});
+    const pairV = graph.v.reduce((obj, vert) => {
+        obj[vert.name] = Nil;
+        dist[vert.name] = null;
+        return obj;
+    }, {});
+    let matching = 0;
+    while(BFS(graph, pairU, pairV, dist, Nil)) {
+        graph.u.forEach((u) => {
+            if (pairU[u.name] === Nil) {
+                if (DFS(u, pairU, pairV, dist, Nil)) {
+                    matching += 1;
+                }
+            }
+        });
+    }
+    return [pairU, pairV, matching];
+}
+
+function BFS(graph, pairU, pairV, dist, Nil) {
+    const queue = [];
+    graph.u.forEach((u) => {
+        if (pairU[u.name] === Nil) {
+            dist[u.name] = 0;
+            queue.push(u);
+        } else {
+            dist[u.name] = Infinity;
+        }
+    });
+    dist[Nil.name] = Infinity;
+    while (queue.length) {
+        const u = queue.shift();
+        if (dist[u.name] < dist[Nil.name]) {
+            u.edges.forEach((v) => {
+               if (dist[pairV[v.name].name] === Infinity) {
+                   dist[pairV[v.name].name] = dist[u.name] + 1;
+                   queue.push(pairV[v.name]);
+               }
+            });
+        }
+    }
+    return dist[Nil.name] !== Infinity;
+}
+
+function DFS(u, pairU, pairV, dist, Nil) {
+    if (u !== Nil) {
+        for (let i = 0; i < u.edges.length; i++) {
+            const v = u.edges[i];
+            if (dist[pairV[v.name].name] === dist[u.name] + 1) {
+                if (DFS(pairV[v.name], pairU, pairV, dist, Nil)) {
+                    pairV[v.name] = u;
+                    pairU[u.name] = v;
+                    return true;
+                }
+            }
+        }
+
+        dist[u.name] = Infinity;
+        return false;
+    }
+    return true;
 }
