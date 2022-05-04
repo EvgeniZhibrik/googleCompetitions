@@ -40,7 +40,7 @@ function runSolution() {
                 if ((len - (nextLenCount * (startLen + 1))) % startLen === 0) {
                     if (nextLenCount === 0) {
                         if (startLen > 1 || len <= 9) {
-                            let start = +lines[0].slice(0, startLen);
+                            let start = len === lines[0].length ? +lines[0].slice(0, startLen) : Math.pow(10, startLen - 1);
                             let finish = Math.pow(10, startLen) - (len / startLen);
                             for (let i = start; i <= finish; i++) {
                                 let j = i + 1;
